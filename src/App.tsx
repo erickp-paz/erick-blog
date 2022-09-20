@@ -1,56 +1,30 @@
-import { useState, useEffect } from 'react'
-import { supabase } from './client'
-import './App.css'
+import {
+  MantineProvider,
+  ColorSchemeProvider,
+  ColorScheme
+} from '@mantine/core'
+import { useLocalStorage } from '@mantine/hooks'
+import { Home } from './pages/Home'
+
+const THEME_KEY = 'mantine-color-scheme'
 
 export default function App() {
-  const [posts, setPosts] = useState([])
-  const [post, setPost] = useState({title: "", content: ""})
-  const { title, content } = post
+  const [colorScheme, setColorScheme] = useLocalStorage<ColorScheme>({
+    key: THEME_KEY,
+    defaultValue: 'light',
+    getInitialValueInEffect: true
+  })
 
-  useEffect(() => {
-    fetchPosts()
-  }, [])
-  
-  async function fetchPosts() {
-    const { data } = await supabase
-    .from('posts')
-    .select()
-    setPosts(data)
-    console.log("data: ", data)
-  }
-
-  async function createPost() {
-    await supabase
-      .from('posts')
-      .insert([
-        { title, content }
-      ])
-      .single()
-    setPost({ title: "", content: "" })
-    fetchPosts()
-  }
-
+  const toggleColorScheme = (value?: ColorScheme) =>
+    setColorScheme(value || (colorScheme === 'dark' ? 'light' : 'dark'))
   return (
-    <div className="App">
-      <input 
-        placeholder="Title"
-        value={title}
-        onChange={e => setPost({ ...post, title: e.target.value})}
-      />
-      <input 
-        placeholder="Content"
-        value={content}
-        onChange={e => setPost({ ...post, content: e.target.value})}
-      />
-      <button onClick={createPost}>Create Post</button>
-      {
-        posts.map(post => (
-          <div key={post.id}>
-            <h3>{post.title}</h3>
-            <p>{post.content}</p>
-          </div>
-        ))
-      }
-    </div>
+    <MantineProvider withGlobalStyles withNormalizeCSS theme={{ colorScheme }}>
+      <ColorSchemeProvider
+        colorScheme={colorScheme}
+        toggleColorScheme={toggleColorScheme}
+      >
+        <Home />
+      </ColorSchemeProvider>
+    </MantineProvider>
   )
 }
